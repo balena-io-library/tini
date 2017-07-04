@@ -20,6 +20,9 @@ do
 		'i386')
 			sed -e s~#{FROM}~resin/i386-debian:latest~g Dockerfile.debian.tpl > Dockerfile
 		;;
+		'amd64')
+			sed -e s~#{FROM}~resin/amd64-debian:latest~g Dockerfile.debian.tpl > Dockerfile
+		;;
 	esac
 	docker build -t tini-$ARCH-builder .
 
@@ -28,7 +31,7 @@ do
 					-e SECRET_KEY=$SECRET_KEY \
 					-e BUCKET_NAME=$BUCKET_NAME \
 					-e TINI_VERSION=$TINI_VERSION \
-					-e TINI_COMMIT=$TINI_COMMIT tini-$ARCH-builder bash -ex /usr/src/tini/build.sh
+					-e TINI_COMMIT=$TINI_COMMIT --entrypoint /bin/bash tini-$ARCH-builder /usr/src/tini/build.sh
 done
 
 # Clean up builder image after every run
