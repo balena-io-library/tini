@@ -513,7 +513,15 @@ int wait_and_forward_signal(sigset_t const* const parent_sigset_ptr, pid_t const
 		}
 	} else {
 		/* There is a signal to handle here */
-		switch (sig.si_signo) {
+
+		int signo = sig.si_signo;
+
+		if (sig.si_signo == (SIGRTMIN + 3)) {
+			/* Special-cased, if SIGRTMIN+3 received, we forward SIGTERM to child process */
+			signo = SIGTERM;
+		}
+
+		switch (signo) {
 			case SIGCHLD:
 				/* Special-cased, as we don't forward SIGCHLD. Instead, we'll
 				 * fallthrough to reaping processes.
@@ -521,9 +529,9 @@ int wait_and_forward_signal(sigset_t const* const parent_sigset_ptr, pid_t const
 				PRINT_DEBUG("Received SIGCHLD");
 				break;
 			default:
-				PRINT_DEBUG("Passing signal: '%s'", strsignal(sig.si_signo));
+				PRINT_DEBUG("Passing signal: '%s'", strsignal(signo));
 				/* Forward anything else */
-				if (kill(kill_process_group ? -child_pid : child_pid, sig.si_signo)) {
+				if (kill(kill_process_group ? -child_pid : child_pid, signo)) {
 					if (errno == ESRCH) {
 						PRINT_WARNING("Child was dead when forwarding signal");
 					} else {
